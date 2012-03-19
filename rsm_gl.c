@@ -5,11 +5,22 @@
 #endif
 
 #include <math.h>
-#include <gl/gl.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef __APPLE__
+#   include <OpenGL/gl.h>
+#   include <OpenGL/glu.h>
+#else
+#   include <gl/gl.h>
+#   include <gl/glu.h>
+#endif
 
 #ifndef M_PI
 #	define M_PI 3.1415926535
 #endif
+
+#define USE_SLERP
 
 void conv33to44f(float dest[16], const float source[9]) {
 	dest[3]  = 0.0f;
@@ -193,7 +204,9 @@ void rsm_calc_quaternion(const struct RORsmNode *node, unsigned long curtime, fl
 	int curkey;
 	int nextkey;
 	float q[4]; //Our new calculated quaternion
+#ifndef USE_SLERP
 	int qi;
+#endif
 
 	float amount;
 
@@ -214,7 +227,7 @@ void rsm_calc_quaternion(const struct RORsmNode *node, unsigned long curtime, fl
 	// how far along are we from one frame to the other? -- this will always be a number from 0 to 1.
 	amount = (float)(curframe - node->rotkeys[curkey].frame)/(float)(node->rotkeys[nextkey].frame - node->rotkeys[curkey].frame);
 
-#if 1
+#ifdef USE_SLERP
 	// Use SLERP
 	slerpf(q, node->rotkeys[curkey].q, node->rotkeys[nextkey].q, amount);
 #else
