@@ -1,7 +1,7 @@
 #ifndef __ROGL_RSM_GL_H
 #define __ROGL_RSM_GL_H
 
-#include "rsm.h"
+#include "roint/rsm.h"
 
 #ifdef __cplusplus
 extern "C" {
