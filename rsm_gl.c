@@ -1,24 +1,9 @@
 #include "rsm_gl.h"
 
-#ifdef _WIN32
-#	include <windows.h>
-#endif
+#include "rogl_internal.h"
 
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef __APPLE__
-#   include <OpenGL/gl.h>
-#   include <OpenGL/glu.h>
-#else
-#   include <gl/gl.h>
-#   include <gl/glu.h>
-#endif
-
-#ifndef M_PI
-#	define M_PI 3.1415926535
-#endif
 
 #define USE_SLERP
 

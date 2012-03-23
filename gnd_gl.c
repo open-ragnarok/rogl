@@ -1,6 +1,7 @@
 #include "gnd_gl.h"
 
 #include "bmp.h"
+#include "rogl_internal.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,35 +10,6 @@
 #define GNDSURFACE_TOP 1
 #define GNDSURFACE_FRONT 2
 #define GNDSURFACE_RIGHT 3
-
-#ifdef _WIN32
-#	include <windows.h>
-#endif
-
-#ifdef __APPLE__
-#   include <OpenGL/gl.h>
-#   include <OpenGL/glu.h>
-#else
-#   include <gl/gl.h>
-#   include <gl/glu.h>
-#endif
-
-#include "roint/grf.h"
-
-#ifdef _WIN32
-#include "glext.h"
-extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
-extern PFNGLGENBUFFERSPROC glGenBuffers;
-extern PFNGLBINDBUFFERPROC glBindBuffer;
-extern PFNGLBUFFERDATAPROC glBufferData;
-extern PFNGLBUFFERSUBDATAPROC glBufferSubData;
-extern PFNGLMAPBUFFERPROC glMapBuffer;
-extern PFNGLUNMAPBUFFERPROC glUnmapBuffer;
-extern PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture;
-extern PFNGLTEXIMAGE3DPROC glTexImage3D;
-extern PFNGLTEXSUBIMAGE3DEXTPROC glTexSubImage3D;
-extern PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements;
-#endif
 
 void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int surface_id, unsigned int current_surface, unsigned int x, unsigned int y, unsigned int surface_side) {
 	unsigned int idx, cell_idx;
