@@ -25,7 +25,8 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.mingw.lib.debug.862680691" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.lib.debug"/>
 							<builder buildPath="${workspace_loc:/rogl/Debug}" id="cdt.managedbuild.tool.gnu.builder.mingw.base.852051434" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="cdt.managedbuild.tool.gnu.builder.mingw.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.mingw.lib.debug.497557930" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.mingw.lib.debug">
-								<option id="gnu.both.asm.option.include.paths.950340570" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.950340570" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.909723605" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
@@ -38,7 +39,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.lib.debug.1970508556" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.lib.debug">
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.mingw.lib.debug.option.optimization.level.223267661" name="Optimization Level" superClass="gnu.c.compiler.mingw.lib.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.mingw.lib.debug.option.debugging.level.680861582" name="Debug Level" superClass="gnu.c.compiler.mingw.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.584615939" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.584615939" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1209942452" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -56,7 +58,7 @@
 				<externalSettings containerId="roint;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/roint"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roint/Release"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roint/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="roint"/>
 					</externalSetting>
 				</externalSettings>
@@ -84,7 +86,7 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.mingw.lib.release.406021512" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.mingw.lib.release"/>
 							<builder buildPath="${workspace_loc:/rogl/Release}" id="cdt.managedbuild.tool.gnu.builder.mingw.base.1005329360" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="cdt.managedbuild.tool.gnu.builder.mingw.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.mingw.lib.release.1970181945" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.mingw.lib.release">
-								<option id="gnu.both.asm.option.include.paths.946722886" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.946722886" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint/include}&quot;"/>
 								</option>
@@ -98,7 +100,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.lib.release.1413945892" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.lib.release">
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.mingw.lib.release.option.optimization.level.439755976" name="Optimization Level" superClass="gnu.c.compiler.mingw.lib.release.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.mingw.lib.release.option.debugging.level.48387244" name="Debug Level" superClass="gnu.c.compiler.mingw.lib.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.2136375797" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.2136375797" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roint}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1218176456" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -116,7 +118,7 @@
 				<externalSettings containerId="roint;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/roint"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roint/Release"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roint/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="roint"/>
 					</externalSetting>
 				</externalSettings>
@@ -136,4 +138,5 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope"/>
 </cproject>

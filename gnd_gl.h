@@ -31,7 +31,6 @@
 extern "C" {
 #endif
 
-
 struct RoGndGL_VertexInfo {
 	float coord[3];
 	float tex[2];
@@ -55,10 +54,12 @@ struct ROGndGLVBO {
 };
 
 // "Translates" the ROGnd structure into an GL-Friendly one
-struct ROGndGL *gndGL(const struct ROGnd*);
-struct ROGndGLVBO *gndGLVBO(const struct ROGndGL*, const struct ROGnd*, const struct ROGrf* grf);
-void freeGndGL(struct ROGndGL*);
+struct ROGndGL *gndGL_load(const struct ROGnd*);
+void gndGL_free(struct ROGndGL*);
+
+struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL*, const struct ROGnd*, const struct ROGrf* grf);
 void gndGLVBO_draw(const struct ROGndGLVBO*);
+void gndGLVBO_free(struct ROGndGLVBO*);
 
 #ifdef __cplusplus
 }

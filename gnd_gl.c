@@ -173,7 +173,7 @@ void sortTextures(struct ROGndGL *gndgl) {
 	}
 }
 
-struct ROGndGL *gndGL(const struct ROGnd* gnd) {
+struct ROGndGL *gndGL_load(const struct ROGnd* gnd) {
 	struct ROGndGL *gndgl;
 	unsigned int x, y, idx;
 	unsigned int cur_surface;
@@ -224,7 +224,7 @@ struct ROGndGL *gndGL(const struct ROGnd* gnd) {
 	return(gndgl);
 }
 
-void freeGndGL(struct ROGndGL* gndgl) {
+void gndGL_free(struct ROGndGL* gndgl) {
 	free(gndgl->indexdata);
 	free(gndgl->texturedata);
 	free(gndgl->vertexdata);
@@ -281,7 +281,7 @@ void loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx
 		grf_freedata(file);
 }
 
-struct ROGndGLVBO *gndGLVBO(const struct ROGndGL* gndgl, const struct ROGnd* m_gnd, const struct ROGrf* grf) {
+struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd* m_gnd, const struct ROGrf* grf) {
 	struct ROGndGLVBO *gnd;
 	unsigned int i, idx;
 
@@ -345,4 +345,16 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void gndGLVBO_free(struct ROGndGLVBO* vbo) {
+	if (vbo == NULL)
+		return;
+
+	glDeleteBuffers(2, vbo->vbo);
+
+	free(vbo->texturesids);
+	free(vbo->vertexcount);
+
+	free(vbo);
 }
