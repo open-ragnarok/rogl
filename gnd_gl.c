@@ -338,7 +338,8 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	//glDrawElements(GL_QUADS, (GLsizei)gnd->vertexcount, GL_UNSIGNED_SHORT, 0);
 	start = 0;
 	for (i = 0; i < gnd->texturecount; i++) {
-		glDrawRangeElements(GL_QUADS, start, start + gnd->vertexcount[i], gnd->vertexcount[i], GL_UNSIGNED_SHORT, 0);
+		glBindTexture(GL_TEXTURE_2D, gnd->texturesids[i]);
+		glDrawRangeElements(GL_QUADS, start, start + gnd->vertexcount[i], gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, 0);
 		start += gnd->vertexcount[i];
 	}
 
