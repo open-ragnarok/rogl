@@ -39,6 +39,12 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	const struct ROGndCell *cell, *cell2;
 	const struct ROGndSurface *surface;
 
+	// For normal calculation
+	float a[3], b[3], n[3];
+	float normal_size;
+	int i;
+
+	// Some helping pointers
 	idx = current_surface * 4;
 	cell_idx = y * gnd->width + x;
 	cell = &gnd->cells[cell_idx];
@@ -89,8 +95,8 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom;
 		gndgl->vertexdata[idx + 3].coord[1] = cell->height[3];
 		gndgl->vertexdata[idx + 3].coord[2] = (float)(y + 1) * gnd->zoom;
-
 		break;
+
 	case GNDSURFACE_FRONT:
 		cell2 = &gnd->cells[(y+1) * gnd->width + x];
 		gndgl->vertexdata[idx + 0].coord[0] = (float)x * gnd->zoom;
@@ -132,7 +138,22 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	}
 
 	// Normals
-	// TODO: Calculate normals
+	for (i = 0; i < 3; i++) {
+		a[i] = gndgl->vertexdata[idx + 1].coord[i] - gndgl->vertexdata[idx + 0].coord[i];
+		b[i] = gndgl->vertexdata[idx + 2].coord[i] - gndgl->vertexdata[idx + 0].coord[i];
+	}
+
+	n[0] = a[1] * b[2] - a[2] * b[1];
+	n[1] = a[2] * b[0] - a[0] * b[2];
+	n[2] = a[0] * b[1] - a[1] * b[0];
+
+	normal_size = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+
+	for (i = 0; i < 4; i++) {
+		gndgl->vertexdata[idx + i].normal[0] = n[0] / normal_size;
+		gndgl->vertexdata[idx + i].normal[1] = n[1] / normal_size;
+		gndgl->vertexdata[idx + i].normal[2] = n[2] / normal_size;
+	}
 }
 
 void swapQuads(struct ROGndGL *gndgl, unsigned int a, unsigned int b) {
@@ -231,18 +252,24 @@ void gndGL_free(struct ROGndGL* gndgl) {
 	free(gndgl);
 }
 
-void loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx) {
+int loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx) {
 	unsigned char m_alloc;
 	struct strBMP *bmp;
 	unsigned char *buf;
 	struct ROGrfFile *file;
 	char fn[64];
+	unsigned int i, fn_size;
 
 	sprintf(fn, "data\\texture\\%s", tex_fn);
+	// Convert to Lowercase
+	fn_size = strlen(fn);
+	for (i = 0; i < fn_size; i++)
+		fn[i] = (fn[i] >= 65 && fn[i] <= 90)?(fn[i]+32):fn[i];
+
 	file = grf_getfileinfobyname(grf, fn);
 
 	if (file == NULL)
-		return;
+		return(-1);
 
 	if (file->data == NULL) {
 		m_alloc = 1;
@@ -265,7 +292,7 @@ void loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx
 		freeBitmap(bmp);
 		if (m_alloc == 1)
 			grf_freedata(file);
-		return;
+		return(-2);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, glidx);
@@ -279,21 +306,32 @@ void loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx
 	freeBitmap(bmp);
 	if (m_alloc == 1)
 		grf_freedata(file);
+
+	return(0);
 }
 
 struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd* m_gnd, const struct ROGrf* grf) {
 	struct ROGndGLVBO *gnd;
-	unsigned int i, idx;
+	unsigned int i, idx, r;
 
 	gnd = (struct ROGndGLVBO*)malloc(sizeof(struct ROGndGLVBO));
 	memset(gnd, 0, sizeof(struct ROGndGLVBO));
+	gnd->objcount = gndgl->objcount;
 
 	// Register textures
 	gnd->texturecount = m_gnd->texturecount;
 	gnd->texturesids = (unsigned int*)malloc(sizeof(unsigned int) * gnd->texturecount);
 	glGenTextures(gnd->texturecount, gnd->texturesids);
 	for (i = 0; i < gnd->texturecount; i++) {
-		loadTexture(grf, m_gnd->textures[i], gnd->texturesids[i]);
+		r = loadTexture(grf, m_gnd->textures[i], gnd->texturesids[i]);
+#ifdef DEBUG
+		if (r == -1) {
+			printf("ERROR: Texture %s not found.\n", m_gnd->textures[i]);
+		}
+		else if (r == -2) {
+			printf("ERROR: Texture %s not supported\n.", m_gnd->textures[i]);
+		}
+#endif
 	}
 
 	// Copy stuff into video board buffers
@@ -335,12 +373,11 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);    //Notice that after we call glClientActiveTexture, we enable the array
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 3));
 
-	//glDrawElements(GL_QUADS, (GLsizei)gnd->vertexcount, GL_UNSIGNED_SHORT, 0);
 	start = 0;
 	for (i = 0; i < gnd->texturecount; i++) {
 		glBindTexture(GL_TEXTURE_2D, gnd->texturesids[i]);
-		glDrawRangeElements(GL_QUADS, start, start + gnd->vertexcount[i], gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, 0);
-		start += gnd->vertexcount[i];
+		glDrawRangeElements(GL_QUADS, 0, gnd->objcount * 4, gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
+		start += gnd->vertexcount[i] * 4;
 	}
 
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);

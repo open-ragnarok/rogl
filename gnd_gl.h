@@ -48,6 +48,7 @@ struct ROGndGL {
 
 struct ROGndGLVBO {
 	unsigned int vbo[2];	//< VBO Objects
+	unsigned int objcount;	//< Number of quads
 	unsigned int texturecount;	//< Number of textures used by this object
 	unsigned int *texturesids;	//< OpenGL ids for registered textures  (size: texturecount)
 	unsigned int *vertexcount;	//< Array with number of vertexes for each texture (size: texturecount)
