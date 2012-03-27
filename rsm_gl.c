@@ -311,10 +311,164 @@ void rsm_draw_children(const struct RORsm *rsm, const unsigned int *textures, un
 		rsm_draw_children(rsm, textures, timelapse, node->name);
 		glPopMatrix();
 	}
-
 }
 
 void rsm_draw(const struct RORsm *rsm, const unsigned int *textures, unsigned long timelapse) {
 	rsm_draw_children(rsm, textures, timelapse, NULL);
 }
+
+struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm) {
+	struct RoRsmGLVBO* ret = NULL;
+	int i, j, k, idx, face_idx;
+	unsigned int facecount;
+	unsigned int vertexcount;
+
+	struct RoRsmGL_VertexInfo *vertexdata;	//< List of ALL vertices.
+	unsigned short *indices;				//< List of ALL indices. in the same sequence of the nodes.
+
+	if (NULL == rsm)
+		return(ret);
+
+	facecount = 0;
+	vertexcount = 0;
+
+	ret = (struct RoRsmGLVBO*)malloc(sizeof(struct RoRsmGLVBO));
+	ret->nodes = (struct RoRsmGLVBO_NodeInfo*)malloc(sizeof(struct RoRsmGLVBO_NodeInfo) * rsm->node_count);
+	memset(ret->nodes, 0, sizeof(struct RoRsmGLVBO_NodeInfo) * rsm->node_count);
+
+	strcpy(ret->root_name, rsm->main_node);
+
+	// Find out how many vertices we really have
+	for (i = 0; i < rsm->node_count; i++) {
+		facecount += rsm->nodes[i].face_count; // Each face is a triangle
+
+		// We need to know what's the texture for each face and store them somewhere
+		ret->nodes[i].texture_ids = (unsigned int*)malloc(sizeof(unsigned int) * rsm->nodes[i].face_count);
+	}
+	vertexcount = facecount * 3;	// Every face has three vertices on RSM
+
+	// Allocate some space for our vertices and indices
+	vertexdata = (struct RoRsmGL_VertexInfo*)malloc(sizeof(struct RoRsmGL_VertexInfo) * vertexcount);
+	memset(vertexdata, 0, sizeof(struct RoRsmGL_VertexInfo) * vertexcount);
+	indices = (unsigned short*)malloc(sizeof(unsigned short) * vertexcount);
+	memset(indices, 0, sizeof(unsigned short) * vertexcount);
+
+	// Copy vertex data to the right place
+	idx = 0;
+	face_idx = 0;
+	for (i = 0; i < rsm->node_count; i++) {						// For each node...
+		for (j = 0; j < rsm->nodes[i].face_count; j++) {		// ...and each face...
+			for (k = 0; k < 3; k++) {							// ...we have 3 vertices
+				// Coordinates
+				memcpy(vertexdata[idx].coord, rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v, sizeof(float) * 3);
+				// Texture
+				memcpy(vertexdata[idx].tex, &rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u, sizeof(float) * 2);
+
+				// Indice
+				indices[idx] = idx;
+			    idx++;
+			}
+
+			ret->nodes[i].texture_ids[j] = rsm->nodes[i].textures[rsm->nodes[i].faces[j].texid]; // Texture information
+			ret->nodes[i].facecount++;	// Number of faces per node
+			face_idx++;
+		}
+
+		// Setup node details
+		strcpy(ret->nodes[i].name, rsm->nodes[i].name);
+		strcpy(ret->nodes[i].parent, rsm->nodes[i].parent);
+		memcpy(ret->nodes[i].position, rsm->nodes[i].pos.v, sizeof(float) * 3);
+		ret->nodes[i].rotation_angle = rsm->nodes[i].rot_angle * 180.0f / (float)M_PI;			// We want degrees.
+		memcpy(ret->nodes[i].rotation_axis, rsm->nodes[i].rot_axis.v, sizeof(float) * 3);
+		memcpy(ret->nodes[i].scale, rsm->nodes[i].scale.v, sizeof(float) * 3);
+
+		// Transformation matrix for the node
+		memset(ret->nodes[i].transformMatrix, 0, sizeof(float) * 16);
+		memcpy(&ret->nodes[i].transformMatrix[0], &rsm->nodes[i].offsetMT[0], sizeof(float) * 3);
+		memcpy(&ret->nodes[i].transformMatrix[4], &rsm->nodes[i].offsetMT[3], sizeof(float) * 3);
+		memcpy(&ret->nodes[i].transformMatrix[8], &rsm->nodes[i].offsetMT[6], sizeof(float) * 3);
+		memcpy(&ret->nodes[i].transformMatrix[12], &rsm->nodes[i].pos_, sizeof(float) * 3);
+		ret->nodes[i].transformMatrix[15] = 1.0f;
+		// TODO: Position keys
+		// TODO: Rotation keys
+	}
+
+	// Create VBOs and copy stuff to them
+	glGenBuffers(2, ret->vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ret->vbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * vertexcount, indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, ret->vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(struct RoRsmGL_VertexInfo) * vertexcount, vertexdata, GL_STATIC_DRAW);
+
+    // Free unused memory
+    free(vertexdata);
+    free(indices);
+
+
+	return(ret);
+}
+
+void rsmGLVBO_draw_child(const struct RoRsmGLVBO* rsm, unsigned long time, const char *parent_name) {
+	unsigned int start, end;
+	unsigned int i;
+
+	struct RoRsmGLVBO_NodeInfo *node;
+
+	start = 0;
+	node = NULL;
+	for (i = 0; i < rsm->node_count; i++) {
+		if (parent_name == NULL) {
+			if (strcmp(rsm->nodes[i].name, rsm->root_name) == 0) {
+				node = &rsm->nodes[i];
+				break;
+			}
+		}
+		else {
+			if (strcmp(rsm->nodes[i].parent, parent_name) == 0) {
+				node = &rsm->nodes[i];
+				break;
+			}
+		}
+
+		start += rsm->nodes[i].facecount * 3;
+	}
+
+	if (node == NULL) {
+#ifdef DEBUG
+		printf("Error drawing RSM. Cannot find node with parent %s\n", parent_name);
+#endif
+		return;
+	}
+
+	end = start + node->facecount * 3;
+
+	glPushMatrix();
+	glTranslatef(node->position[0], node->position[1], node->position[2]);	// Position our node
+	glRotatef(node->rotation_angle, node->rotation_axis[0], -node->rotation_axis[1], node->rotation_axis[2]);
+	// TODO: Animate
+	glScalef(node->scale[0], node->scale[1], node->scale[2]);
+
+	glPushMatrix();	// Other changes will not be pushed to our children
+	glMultMatrixf(node->transformMatrix);
+
+	// The actual drawing
+	// TODO: Other textures!
+	glDrawRangeElements(GL_TRIANGLES, start, end, node->facecount * 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
+
+	glPopMatrix();
+
+	// Now, the kids...
+	rsmGLVBO_draw_child(rsm, time, node->name);
+
+	glPopMatrix();
+}
+
+void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time) {
+	rsmGLVBO_draw_child(rsm, time, NULL);
+}
+
+void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
+
+}
+
 

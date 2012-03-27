@@ -30,7 +30,49 @@
 extern "C" {
 #endif 
 
+struct RoRsmGL_VertexInfo {
+	float coord[3];
+	float tex[2];
+	float normal[3];
+	union {
+		unsigned int color;
+		struct {
+			unsigned char r, g, b, a;
+		};
+	};
+};
+
+struct RoRsmGLVBO_NodeInfo {
+	char name[40];
+	char parent[40];
+	unsigned int facecount;					//< Number of triangles on this node
+	unsigned int *texture_ids;
+
+	float transformMatrix[16];				//< 4x4 transformation matrix
+	float position[3];
+	float rotation_angle, rotation_axis[3];
+	float scale[3];
+	// TODO: Poskeys
+	// TODO: Rotkeys
+};
+
+struct RoRsmGLVBO {
+	unsigned int vbo[2];					//< Vertex Buffer Object indices (vbo and ibo)
+
+	unsigned int texture_count;
+	unsigned int *texids;					//< Texture ID for each face (total count = vertexcount/3)
+
+	char root_name[40];
+
+	unsigned int node_count;				//< Number of nodes
+	struct RoRsmGLVBO_NodeInfo *nodes;			//< Information of each node
+};
+
 void rsm_draw(const struct RORsm *rsm, const unsigned int *textures, unsigned long timelapse);
+
+struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm);
+void rsmGLVBO_draw(const struct RoRsmGLVBO*, unsigned long time);
+void rsmGLVBO_free(struct RoRsmGLVBO*);
 
 #ifdef __cplusplus
 }
