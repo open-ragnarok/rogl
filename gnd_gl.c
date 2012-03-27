@@ -52,16 +52,16 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 
 	// Texture
 	gndgl->texturedata[current_surface] = surface->textureId;
-	gndgl->vertexdata[idx+0].tex[0] = surface->u[0];
+	gndgl->vertexdata[idx+0].tex[0] = 1.0f - surface->u[0];
 	gndgl->vertexdata[idx+0].tex[1] = surface->v[0];
 
-	gndgl->vertexdata[idx+1].tex[0] = surface->u[1];
+	gndgl->vertexdata[idx+1].tex[0] = 1.0f - surface->u[1];
 	gndgl->vertexdata[idx+1].tex[1] = surface->v[1];
 
-	gndgl->vertexdata[idx+2].tex[0] = surface->u[2];
+	gndgl->vertexdata[idx+2].tex[0] = 1.0f - surface->u[2];
 	gndgl->vertexdata[idx+2].tex[1] = surface->v[2];
 
-	gndgl->vertexdata[idx+3].tex[0] = surface->u[3];
+	gndgl->vertexdata[idx+3].tex[0] = 1.0f - surface->u[3];
 	gndgl->vertexdata[idx+3].tex[1] = surface->v[3];
 
 	// Indices
@@ -70,13 +70,6 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	gndgl->indexdata[current_surface][2] = idx+3;
 	gndgl->indexdata[current_surface][3] = idx+2;
     
-    /*
-    float x0 = (float)x * gnd->zoom;
-    float x1 = x0 + gnd->zoom;
-    float y0 = (float)y * gnd->zoom;
-    float y1 = y0 + gnd->zoom;
-    */
-
 	// Vertexes
 	switch (surface_side) {
 	case GNDSURFACE_TOP:
@@ -390,6 +383,7 @@ void gndGLVBO_free(struct ROGndGLVBO* vbo) {
 		return;
 
 	glDeleteBuffers(2, vbo->vbo);
+	glDeleteTextures(vbo->texturecount, vbo->texturesids);
 
 	free(vbo->texturesids);
 	free(vbo->vertexcount);
