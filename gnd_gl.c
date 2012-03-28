@@ -34,10 +34,17 @@
 #define GNDSURFACE_FRONT 2
 #define GNDSURFACE_RIGHT 3
 
+#define LIGHTMAP_SHADOW 0
+#define LIGHTMAP_COLOR 1
+
+#define VBO_VERTEXES 0
+#define VBO_INDICES 1
+
 void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int surface_id, unsigned int current_surface, unsigned int x, unsigned int y, unsigned int surface_side) {
 	unsigned int idx, cell_idx;
 	const struct ROGndCell *cell, *cell2;
 	const struct ROGndSurface *surface;
+	float lightmap_v[2], lightmap_u[2];
 
 	// For normal calculation
 	float a[3], b[3], n[3];
@@ -63,6 +70,33 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 
 	gndgl->vertexdata[idx+3].tex[0] = 1.0f - surface->u[3];
 	gndgl->vertexdata[idx+3].tex[1] = surface->v[3];
+
+	// Lightmap
+	unsigned int lm_w, lm_h;
+	unsigned int lm_x, lm_y;
+
+	lm_w = (int)floor(sqrt(gnd->lightmapcount));
+	lm_h = (int)ceil((float)gnd->lightmapcount / lm_w);
+	lm_x = floor((float)surface->lightmapId / lm_h);
+	lm_y = surface->lightmapId % lm_h;
+
+	// Calculate U: y / h + u0 / h = (y + u0) / h
+	lightmap_u[0] = (float)(0.0f + lm_y) / lm_h;
+	lightmap_u[1] = (float)(1.0f + lm_y) / lm_h;
+	// Calculate V: x / w + v0 / w = (x + v0) / w
+	lightmap_v[0] = (float)(0.0f + lm_x) / lm_w;
+	lightmap_v[1] = (float)(1.0f + lm_x) / lm_w;
+	gndgl->vertexdata[idx+0].lightmap_tex[0] = lightmap_u[0];
+	gndgl->vertexdata[idx+0].lightmap_tex[1] = lightmap_v[0];
+
+	gndgl->vertexdata[idx+1].lightmap_tex[0] = lightmap_u[1];
+	gndgl->vertexdata[idx+1].lightmap_tex[1] = lightmap_v[0];
+
+	gndgl->vertexdata[idx+2].lightmap_tex[0] = lightmap_u[0];
+	gndgl->vertexdata[idx+2].lightmap_tex[1] = lightmap_v[1];
+
+	gndgl->vertexdata[idx+3].lightmap_tex[0] = lightmap_u[1];
+	gndgl->vertexdata[idx+3].lightmap_tex[1] = lightmap_v[1];
 
 	// Indices
 	gndgl->indexdata[current_surface][0] = idx+0;
@@ -303,6 +337,56 @@ int loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx)
 	return(0);
 }
 
+// Load the lightmap textures from GND data
+void gndGLVBO_loadLightmaps(struct ROGndGLVBO *vbo, const struct ROGnd* gnd) {
+	unsigned int i;
+	unsigned int w, h;
+	unsigned int x, y;
+	unsigned int j;
+	unsigned char *lightmap_shadow;
+	unsigned char *lightmap_color;
+
+	unsigned int offset;
+
+#define tsize 7 // Even tough the lightmap info on GND files are 8x8, the last row/column does not seem to be used.
+
+	w = (int)floor(sqrt(gnd->lightmapcount));
+	h = (int)ceil((float)gnd->lightmapcount / w);
+	glGenTextures(2, vbo->lightmap_textures);
+	lightmap_shadow = (unsigned char*)malloc(sizeof(unsigned char) * tsize * tsize * w * h);
+	lightmap_color  = (unsigned char*)malloc(sizeof(unsigned char) * tsize * tsize * w * h * 3);
+	x = 0; y = 0;
+	for (i = 0; i < gnd->lightmapcount; i++) {
+		for (j = 0; j < tsize; j++) {
+			offset = y * w * tsize * tsize + j * w * tsize + x * tsize;
+
+			memcpy(&lightmap_shadow[offset], &gnd->lightmaps[i].brightness[j * 8], tsize);
+			memcpy(&lightmap_color[offset * 3], &gnd->lightmaps[i].intensity[j * 8], tsize * 3);
+		}
+		y++;
+		if (y >= h) {
+			y = 0;
+			x++;
+		}
+	}
+	glBindTexture(GL_TEXTURE_2D, vbo->lightmap_textures[LIGHTMAP_SHADOW]);
+	glTexImage2D(GL_TEXTURE_2D, 0, 1, w * tsize, h * tsize, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, lightmap_shadow);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_2D, vbo->lightmap_textures[LIGHTMAP_COLOR]);
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, w * tsize, h * tsize, 0, GL_RGB, GL_UNSIGNED_BYTE, lightmap_color);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	free(lightmap_shadow);
+	free(lightmap_color);
+}
+
 struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd* m_gnd, const struct ROGrf* grf) {
 	struct ROGndGLVBO *gnd;
 	unsigned int i, idx, r;
@@ -329,11 +413,10 @@ struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd
 
 	// Copy stuff into video board buffers
 	glGenBuffers(2, gnd->vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[1]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[VBO_INDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(t_rogndidx) * gndgl->objcount, gndgl->indexdata, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(struct RoGndGL_VertexInfo) * gndgl->objcount * 4, gndgl->vertexdata, GL_STATIC_DRAW);
-
 
 	// Setup counts
 	gnd->vertexcount = (unsigned int*)malloc(sizeof(unsigned int) * gnd->texturecount);
@@ -346,6 +429,9 @@ struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd
 		gnd->vertexcount[idx]++;
 	}
 
+	// Lightmap textures
+	gndGLVBO_loadLightmaps(gnd, m_gnd);
+
 	return(gnd);
 }
 
@@ -353,8 +439,8 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	unsigned int i;
 	unsigned int start;
 
-	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[0]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[VBO_INDICES]);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -362,8 +448,27 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
     glNormalPointer(GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 5));
 
 	// Textures
-	glClientActiveTexture(GL_TEXTURE0);
+	glClientActiveTexture(GL_TEXTURE1);				// Shadow
+	glActiveTexture(GL_TEXTURE1);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+	glBindTexture(GL_TEXTURE_2D, gnd->lightmap_textures[LIGHTMAP_SHADOW]);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 8));
+
+	glClientActiveTexture(GL_TEXTURE2);				// Color
+	glActiveTexture(GL_TEXTURE2);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 8));
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+	glBindTexture(GL_TEXTURE_2D, gnd->lightmap_textures[LIGHTMAP_COLOR]);
+
+	glClientActiveTexture(GL_TEXTURE0);				// Main Texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);    //Notice that after we call glClientActiveTexture, we enable the array
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 3));
 
 	start = 0;
@@ -373,7 +478,13 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 		start += gnd->vertexcount[i] * 4;
 	}
 
+	glClientActiveTexture(GL_TEXTURE2);				// Color
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glClientActiveTexture(GL_TEXTURE1);				// Shadow
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glClientActiveTexture(GL_TEXTURE0);				// Main Texture
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
@@ -382,8 +493,9 @@ void gndGLVBO_free(struct ROGndGLVBO* vbo) {
 	if (vbo == NULL)
 		return;
 
-	glDeleteBuffers(2, vbo->vbo);
-	glDeleteTextures(vbo->texturecount, vbo->texturesids);
+	glDeleteBuffers(2, vbo->vbo);								// Delete cached vbo objects
+	glDeleteTextures(vbo->texturecount, vbo->texturesids);		// Delete registered ground textures
+	glDeleteTextures(2, vbo->lightmap_textures);				// Delete registered lightmaps
 
 	free(vbo->texturesids);
 	free(vbo->vertexcount);

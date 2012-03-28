@@ -35,6 +35,7 @@ struct RoGndGL_VertexInfo {
 	float coord[3];
 	float tex[2];
 	float normal[3];
+	float lightmap_tex[2];	//< Texture coordinates are the same for both shadow and color
 };
 
 typedef unsigned short t_rogndidx[4];
@@ -52,6 +53,7 @@ struct ROGndGLVBO {
 	unsigned int texturecount;	//< Number of textures used by this object
 	unsigned int *texturesids;	//< OpenGL ids for registered textures  (size: texturecount)
 	unsigned int *vertexcount;	//< Array with number of vertexes for each texture (size: texturecount)
+	unsigned int lightmap_textures[2];
 };
 
 // "Translates" the ROGnd structure into an GL-Friendly one

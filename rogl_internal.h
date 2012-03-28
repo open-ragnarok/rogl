@@ -44,6 +44,7 @@
 #	else
 #		include "glext.h"
 #	endif
+// Please note that your implementation must provide these functions. These are only external prototypes.
 extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
@@ -55,6 +56,7 @@ extern PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture;
 extern PFNGLTEXIMAGE3DPROC glTexImage3D;
 extern PFNGLTEXSUBIMAGE3DEXTPROC glTexSubImage3D;
 extern PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements;
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
 
 #include <math.h>
