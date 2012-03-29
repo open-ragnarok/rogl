@@ -25,6 +25,8 @@
 #define __ROGL_RSM_GL_H
 
 #include "roint/rsm.h"
+#include "roint/grf.h"
+#include <gl/gl.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,17 +62,17 @@ struct RoRsmGLVBO {
 	unsigned int vbo[2];					//< Vertex Buffer Object indices (vbo and ibo)
 
 	unsigned int texture_count;
-	unsigned int *texids;					//< Texture ID for each face (total count = vertexcount/3)
+	GLuint *texids;							//< Texture ID for each face (total count = vertexcount/3)
 
 	char root_name[40];
 
 	unsigned int node_count;				//< Number of nodes
-	struct RoRsmGLVBO_NodeInfo *nodes;			//< Information of each node
+	struct RoRsmGLVBO_NodeInfo *nodes;		//< Information of each node
 };
 
 void rsm_draw(const struct RORsm *rsm, const unsigned int *textures, unsigned long timelapse);
 
-struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm);
+struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* grf);
 void rsmGLVBO_draw(const struct RoRsmGLVBO*, unsigned long time);
 void rsmGLVBO_free(struct RoRsmGLVBO*);
 

@@ -23,6 +23,7 @@
 */
 #include "rsm_gl.h"
 
+#include "textures.h"
 #include "rogl_internal.h"
 
 #include <stdlib.h>
@@ -317,7 +318,16 @@ void rsm_draw(const struct RORsm *rsm, const unsigned int *textures, unsigned lo
 	rsm_draw_children(rsm, textures, timelapse, NULL);
 }
 
-struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm) {
+// VBO Stuff
+
+// Function declarations
+void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, unsigned int index);
+struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* grf);
+void rsmGLVBO_draw_child(const struct RoRsmGLVBO* rsm, unsigned long time, const char *parent_name);
+void rsmGLVBO_draw_node(const struct RoRsmGLVBO* rsm, unsigned long time, const char *node_name);
+void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time);
+
+struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* grf) {
 	struct RoRsmGLVBO* ret = NULL;
 	int i, j, k, idx, face_idx;
 	unsigned int facecount;
@@ -339,6 +349,7 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm) {
 	strcpy(ret->root_name, rsm->main_node);
 
 	// Find out how many vertices we really have
+	ret->node_count = rsm->node_count;
 	for (i = 0; i < rsm->node_count; i++) {
 		facecount += rsm->nodes[i].face_count; // Each face is a triangle
 
@@ -346,6 +357,24 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm) {
 		ret->nodes[i].texture_ids = (unsigned int*)malloc(sizeof(unsigned int) * rsm->nodes[i].face_count);
 	}
 	vertexcount = facecount * 3;	// Every face has three vertices on RSM
+
+	// Textures
+	ret->texture_count = rsm->texture_count;
+	ret->texids = (GLuint*)malloc(sizeof(GLuint) * ret->texture_count);
+	glGenTextures(ret->texture_count, ret->texids);
+	for (i = 0; i < rsm->texture_count; i++) {
+		j = rogl_load_texture(grf, rsm->textures[i], ret->texids[i]);
+#ifdef DEBUG
+		if (j != 0) {
+			if (j == -1) {
+				fprintf(stderr, "ERROR: Cannot find texture: %s\n", rsm->textures[i]);
+			}
+			else if (j == -2) {
+				fprintf(stderr, "ERROR: Texture not supported: %s\n", rsm->textures[i]);
+			}
+		}
+#endif
+	}
 
 	// Allocate some space for our vertices and indices
 	vertexdata = (struct RoRsmGL_VertexInfo*)malloc(sizeof(struct RoRsmGL_VertexInfo) * vertexcount);
@@ -409,36 +438,46 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm) {
 }
 
 void rsmGLVBO_draw_child(const struct RoRsmGLVBO* rsm, unsigned long time, const char *parent_name) {
-	unsigned int start, end;
+	unsigned int i;
+	for (i = 0; i < rsm->node_count; i++) {
+		if (strcmp(rsm->nodes[i].parent, parent_name) == 0) {
+			rsmGLVBO_draw_node_index(rsm, time, i);
+		}
+	}
+}
+
+void rsmGLVBO_draw_node(const struct RoRsmGLVBO* rsm, unsigned long time, const char *node_name) {
+	unsigned int i;
+	for (i = 0; i < rsm->node_count; i++) {
+		if (strcmp(rsm->nodes[i].name, node_name) == 0) {
+			rsmGLVBO_draw_node_index(rsm, time, i);
+			break;
+		}
+	}
+}
+
+void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, unsigned int index) {
+	unsigned int start;	//< Vertex index offset that we will start drawing (NOT face index!)
+	unsigned int end;	//< Vertex end offset
 	unsigned int i;
 
-	struct RoRsmGLVBO_NodeInfo *node;
+	struct RoRsmGLVBO_NodeInfo *node;	//< The node we're currently drawing.
 
 	start = 0;
 	node = NULL;
-	for (i = 0; i < rsm->node_count; i++) {
-		if (parent_name == NULL) {
-			if (strcmp(rsm->nodes[i].name, rsm->root_name) == 0) {
-				node = &rsm->nodes[i];
-				break;
-			}
-		}
-		else {
-			if (strcmp(rsm->nodes[i].parent, parent_name) == 0) {
-				node = &rsm->nodes[i];
-				break;
-			}
-		}
 
-		start += rsm->nodes[i].facecount * 3;
-	}
-
-	if (node == NULL) {
+	if (index >= rsm->node_count) {
 #ifdef DEBUG
-		printf("Error drawing RSM. Cannot find node with parent %s\n", parent_name);
+		fprintf(stderr,"Index out of range\n");
 #endif
 		return;
 	}
+
+	for (i = 0; i < index; i++) {
+		start += rsm->nodes[i].facecount * 3;
+	}
+
+	node = &rsm->nodes[index];
 
 	end = start + node->facecount * 3;
 
@@ -452,8 +491,12 @@ void rsmGLVBO_draw_child(const struct RoRsmGLVBO* rsm, unsigned long time, const
 	glMultMatrixf(node->transformMatrix);
 
 	// The actual drawing
-	// TODO: Other textures!
-	glDrawRangeElements(GL_TRIANGLES, start, end, node->facecount * 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
+	// TODO: Optimize this
+	for (i = 0; i < node->facecount; i++) {
+		glBindTexture(GL_TEXTURE_2D, rsm->texids[node->texture_ids[i]]);
+		glDrawRangeElements(GL_TRIANGLES, start, end, 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * (start + i * 3)));
+	}
+	//glDrawRangeElements(GL_TRIANGLES, start, end, node->facecount * 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
 
 	glPopMatrix();
 
@@ -464,11 +507,11 @@ void rsmGLVBO_draw_child(const struct RoRsmGLVBO* rsm, unsigned long time, const
 }
 
 void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time) {
-	rsmGLVBO_draw_child(rsm, time, NULL);
+	rsmGLVBO_draw_node(rsm, time, rsm->root_name);
 }
 
 void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
-
+	// TODO: Free RoRsmGLVBO data
 }
 
 
