@@ -23,7 +23,7 @@
 */
 #include "gnd_gl.h"
 
-#include "bmp.h"
+#include "textures.h"
 #include "rogl_internal.h"
 
 #include <stdlib.h>
@@ -289,64 +289,6 @@ void gndGL_free(struct ROGndGL* gndgl) {
 	free(gndgl);
 }
 
-int loadTexture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx) {
-	unsigned char m_alloc;
-	struct strBMP *bmp;
-	unsigned char *buf;
-	struct ROGrfFile *file;
-	char fn[64];
-	unsigned int i, fn_size;
-
-	sprintf(fn, "data\\texture\\%s", tex_fn);
-	// Convert to Lowercase
-	fn_size = strlen(fn);
-	for (i = 0; i < fn_size; i++)
-		fn[i] = (fn[i] >= 65 && fn[i] <= 90)?(fn[i]+32):fn[i];
-
-	file = grf_getfileinfobyname(grf, fn);
-
-	if (file == NULL)
-		return(-1);
-
-	if (file->data == NULL) {
-		m_alloc = 1;
-		grf_getdata(file);
-	}
-	else {
-		m_alloc = 0;
-	}
-	
-	bmp = loadBitmap(file->data, file->uncompressedLength);
-	switch(bmp->info.bpp) {
-	case 8:
-		buf = bmp8to32(bmp);
-		break;
-	case 32:
-		buf = (unsigned char*)bmp->data;
-		break;
-	default:
-		// invalid BPP
-		freeBitmap(bmp);
-		if (m_alloc == 1)
-			grf_freedata(file);
-		return(-2);
-	}
-
-	glBindTexture(GL_TEXTURE_2D, glidx);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);   // Linear Min Filter
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);   // Linear Mag Filter
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, bmp->info.width, bmp->info.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, buf);	
-
-	if (bmp->info.bpp != 32) {
-		freeBitmapData(buf);
-	}
-	freeBitmap(bmp);
-	if (m_alloc == 1)
-		grf_freedata(file);
-
-	return(0);
-}
-
 // Load the lightmap textures from GND data
 void gndGLVBO_loadLightmaps(struct ROGndGLVBO *vbo, const struct ROGnd* gnd) {
 	unsigned int i;
@@ -410,7 +352,7 @@ struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd
 	gnd->texturesids = (unsigned int*)malloc(sizeof(unsigned int) * gnd->texturecount);
 	glGenTextures(gnd->texturecount, gnd->texturesids);
 	for (i = 0; i < gnd->texturecount; i++) {
-		r = loadTexture(grf, m_gnd->textures[i], gnd->texturesids[i]);
+		r = rogl_load_texture(grf, m_gnd->textures[i], gnd->texturesids[i]);
 #ifdef DEBUG
 		if (r == -1) {
 			printf("ERROR: Texture %s not found.\n", m_gnd->textures[i]);
