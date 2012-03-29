@@ -45,11 +45,16 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	const struct ROGndCell *cell, *cell2;
 	const struct ROGndSurface *surface;
 	float lightmap_v[2], lightmap_u[2];
+	float x0, x1, y0, y1;
 
 	// For normal calculation
 	float a[3], b[3], n[3];
 	float normal_size;
 	int i;
+
+	// For lightmaps
+	unsigned int lm_w, lm_h;
+	unsigned int lm_x, lm_y;
 
 	// Some helping pointers
 	idx = current_surface * 4;
@@ -59,6 +64,7 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 
 	// Texture
 	gndgl->texturedata[current_surface] = surface->textureId;
+
 	gndgl->vertexdata[idx+0].tex[0] = 1.0f - surface->u[0];
 	gndgl->vertexdata[idx+0].tex[1] = surface->v[0];
 
@@ -72,20 +78,17 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	gndgl->vertexdata[idx+3].tex[1] = surface->v[3];
 
 	// Lightmap
-	unsigned int lm_w, lm_h;
-	unsigned int lm_x, lm_y;
-
 	lm_w = (int)floor(sqrt(gnd->lightmapcount));
 	lm_h = (int)ceil((float)gnd->lightmapcount / lm_w);
 	lm_x = floor((float)surface->lightmapId / lm_h);
 	lm_y = surface->lightmapId % lm_h;
 
 	// Calculate U: y / h + u0 / h = (y + u0) / h
-	lightmap_u[0] = (float)(0.0f + lm_y) / lm_h;
-	lightmap_u[1] = (float)(1.0f + lm_y) / lm_h;
+	lightmap_u[0] = (float)(0.1f + lm_y) / lm_h;
+	lightmap_u[1] = (float)(0.9f + lm_y) / lm_h;
 	// Calculate V: x / w + v0 / w = (x + v0) / w
-	lightmap_v[0] = (float)(0.0f + lm_x) / lm_w;
-	lightmap_v[1] = (float)(1.0f + lm_x) / lm_w;
+	lightmap_v[0] = (float)(0.1f + lm_x) / lm_w;
+	lightmap_v[1] = (float)(0.9f + lm_x) / lm_w;
 	gndgl->vertexdata[idx+0].lightmap_tex[0] = lightmap_u[0];
 	gndgl->vertexdata[idx+0].lightmap_tex[1] = lightmap_v[0];
 
@@ -107,21 +110,28 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	// Vertexes
 	switch (surface_side) {
 	case GNDSURFACE_TOP:
-		gndgl->vertexdata[idx + 0].coord[0] = (float)x * gnd->zoom;
+		x0 = (float)x * gnd->zoom;
+		y0 = (float)y * gnd->zoom;
+
+		x1 = (float)(x + 1) * gnd->zoom;
+		y1 = (float)(y + 1) * gnd->zoom;
+
+		gndgl->vertexdata[idx + 0].coord[0] = x0;
+		gndgl->vertexdata[idx + 0].coord[2] = y0;
+
+		gndgl->vertexdata[idx + 1].coord[0] = x1;
+		gndgl->vertexdata[idx + 1].coord[2] = y0;
+
+		gndgl->vertexdata[idx + 2].coord[0] = x0;
+		gndgl->vertexdata[idx + 2].coord[2] = y1;
+
+		gndgl->vertexdata[idx + 3].coord[0] = x1;
+		gndgl->vertexdata[idx + 3].coord[2] = y1;
+
 		gndgl->vertexdata[idx + 0].coord[1] = cell->height[0];
-		gndgl->vertexdata[idx + 0].coord[2] = (float)y * gnd->zoom;
-
-		gndgl->vertexdata[idx + 1].coord[0] = (float)(x + 1) * gnd->zoom;
 		gndgl->vertexdata[idx + 1].coord[1] = cell->height[1];
-		gndgl->vertexdata[idx + 1].coord[2] = (float)y * gnd->zoom;
-
-		gndgl->vertexdata[idx + 2].coord[0] = (float)x * gnd->zoom;
 		gndgl->vertexdata[idx + 2].coord[1] = cell->height[2];
-		gndgl->vertexdata[idx + 2].coord[2] = (float)(y + 1) * gnd->zoom;
-
-		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom;
 		gndgl->vertexdata[idx + 3].coord[1] = cell->height[3];
-		gndgl->vertexdata[idx + 3].coord[2] = (float)(y + 1) * gnd->zoom;
 		break;
 
 	case GNDSURFACE_FRONT:
