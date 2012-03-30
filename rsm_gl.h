@@ -25,6 +25,7 @@
 #define __ROGL_RSM_GL_H
 
 #include "roint/rsm.h"
+#include "roint/rsw.h"
 #include "roint/grf.h"
 #include <gl/gl.h>
 
@@ -74,6 +75,7 @@ void rsm_draw(const struct RORsm *rsm, const unsigned int *textures, unsigned lo
 
 struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* grf);
 void rsmGLVBO_draw(const struct RoRsmGLVBO*, unsigned long time);
+void rsmGLVBO_drawWithRSWObject(const struct RoRsmGLVBO*, unsigned long time, const struct s_RORswObjModel*);
 void rsmGLVBO_free(struct RoRsmGLVBO*);
 
 #ifdef __cplusplus

@@ -391,7 +391,7 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 				// "i" is our current node.
 				// "j" is our current face (inside the node)
 				// "k" is our current vertex (inside the face. There are always 3 vertexes on each face).
-#if 0
+#if 1
 				// Coordinates
 				vertexdata[idx].coord[0] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[0];
 				vertexdata[idx].coord[1] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[1];
@@ -399,7 +399,7 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 
 				// Texture
 				vertexdata[idx].tex[0] = rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u;
-				vertexdata[idx].tex[1] = rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].v;
+				vertexdata[idx].tex[1] = 1.0f - rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].v;
 #else
 				// Coordinates
 				memcpy(vertexdata[idx].coord, rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v, sizeof(float) * 3);
@@ -541,6 +541,22 @@ void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time) {
 
 	glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void rsmGLVBO_drawWithRSWObject(const struct RoRsmGLVBO* rsm, unsigned long time, const struct s_RORswObjModel* obj) {
+	glPushMatrix();
+
+	if (NULL != obj) {
+		glTranslatef(obj->pos[0], obj->pos[1], obj->pos[2]);
+		glRotatef(obj->rot[0], 1.0f, 0.0f, 0.0f);
+		glRotatef(obj->rot[2], 0.0f, 0.0f, 1.0f);
+		glRotatef(obj->rot[1], 0.0f, 1.0f, 0.0f);
+		glScalef(obj->scale[0], obj->scale[1], obj->scale[2]);
+	}
+
+	rsmGLVBO_draw(rsm, time);
+
+	glPopMatrix();
 }
 
 void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
