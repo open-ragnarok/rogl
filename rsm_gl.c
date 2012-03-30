@@ -511,7 +511,19 @@ void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time) {
 }
 
 void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
-	// TODO: Free RoRsmGLVBO data
+	unsigned int i;
+
+	glDeleteBuffers(2, rsm->vbo);
+	glDeleteTextures(rsm->texture_count, rsm->texids);
+
+	for (i = 0; i < rsm->node_count; i++) {
+		free(rsm->nodes[i].texture_ids);
+	}
+
+	free(rsm->texids);
+	free(rsm->nodes);
+
+	free(rsm);
 }
 
 
