@@ -53,6 +53,16 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	unsigned int lm_w, lm_h;
 	unsigned int lm_x, lm_y;
 
+	float xoffset, yoffset;
+
+#if 1
+	xoffset = -1.0f * (float)gnd->width * (float)gnd->zoom / 2.0f;
+	yoffset = -1.0f * (float)gnd->height * (float)gnd->zoom / 2.0f;
+#else
+	xoffset = 0;
+	yoffset = 0;
+#endif
+
 	// Some helping pointers
 	idx = current_surface * 4;
 	cell_idx = y * gnd->width + x;
@@ -107,11 +117,11 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	// Vertexes
 	switch (surface_side) {
 	case GNDSURFACE_TOP:
-		x0 = (float)x * gnd->zoom;
-		y0 = (float)y * gnd->zoom;
+		x0 = (float)x * gnd->zoom + xoffset;
+		y0 = (float)y * gnd->zoom + yoffset;
 
-		x1 = (float)(x + 1) * gnd->zoom;
-		y1 = (float)(y + 1) * gnd->zoom;
+		x1 = (float)(x + 1) * gnd->zoom + xoffset;
+		y1 = (float)(y + 1) * gnd->zoom + yoffset;
 
 		gndgl->vertexdata[idx + 0].coord[0] = x0;
 		gndgl->vertexdata[idx + 0].coord[2] = y0;
@@ -133,41 +143,41 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 
 	case GNDSURFACE_FRONT:
 		cell2 = &gnd->cells[(y+1) * gnd->width + x];
-		gndgl->vertexdata[idx + 0].coord[0] = (float)x * gnd->zoom;
+		gndgl->vertexdata[idx + 0].coord[0] = (float)x * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 0].coord[1] = cell->height[2];
-		gndgl->vertexdata[idx + 0].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 0].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 1].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 1].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 1].coord[1] = cell->height[3];
-		gndgl->vertexdata[idx + 1].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 1].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 2].coord[0] = (float)x * gnd->zoom;
+		gndgl->vertexdata[idx + 2].coord[0] = (float)x * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 2].coord[1] = cell2->height[0];
-		gndgl->vertexdata[idx + 2].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 2].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 3].coord[1] = cell2->height[1];
-		gndgl->vertexdata[idx + 3].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 3].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 		break;
 
 	case GNDSURFACE_RIGHT:
 		cell2 = &gnd->cells[y * gnd->width + x + 1];
 		
-		gndgl->vertexdata[idx + 0].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 0].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 0].coord[1] = cell->height[3];
-		gndgl->vertexdata[idx + 0].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 0].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 1].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 1].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 1].coord[1] = cell->height[1];
-		gndgl->vertexdata[idx + 1].coord[2] = (float)y * gnd->zoom;
+		gndgl->vertexdata[idx + 1].coord[2] = (float)y * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 2].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 2].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 2].coord[1] = cell2->height[2];
-		gndgl->vertexdata[idx + 2].coord[2] = (float)(y + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 2].coord[2] = (float)(y + 1) * gnd->zoom + yoffset;
 
-		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom;
+		gndgl->vertexdata[idx + 3].coord[0] = (float)(x + 1) * gnd->zoom + xoffset;
 		gndgl->vertexdata[idx + 3].coord[1] = cell2->height[0];
-		gndgl->vertexdata[idx + 3].coord[2] = (float)y * gnd->zoom;
+		gndgl->vertexdata[idx + 3].coord[2] = (float)y * gnd->zoom + yoffset;
 		break;
 	}
 
@@ -235,7 +245,6 @@ struct ROGndGL *gndGL_load(const struct ROGnd* gnd) {
 
 	gndgl = (struct ROGndGL*)malloc(sizeof(struct ROGndGL));
 	memset(gndgl, 0, sizeof(struct ROGndGL));
-	gndgl->objcount = 0;
 
 	// Iterate each cell to see how many surfaces it have
 	for (x = 0; x < gnd->width; x++) {
@@ -246,7 +255,6 @@ struct ROGndGL *gndGL_load(const struct ROGnd* gnd) {
 			if (gnd->cells[idx].rightSurfaceId != -1) gndgl->objcount++;
 		}
 	}
-	printf("Let's draw %d quads!\n", gndgl->objcount);
 
 	// Initialize memory
 	gndgl->vertexdata = (struct RoGndGL_VertexInfo*)malloc(sizeof(struct RoGndGL_VertexInfo) * gndgl->objcount * 4);
@@ -368,14 +376,14 @@ struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd
     glBufferData(GL_ARRAY_BUFFER, sizeof(struct RoGndGL_VertexInfo) * gndgl->objcount * 4, gndgl->vertexdata, GL_STATIC_DRAW);
 
 	// Setup counts
-	gnd->vertexcount = (unsigned int*)malloc(sizeof(unsigned int) * gnd->texturecount);
-	memset(gnd->vertexcount, 0, sizeof(unsigned int) * gnd->texturecount);
-	gnd->vertexcount[0] = 1;
+	gnd->objectcount = (unsigned int*)malloc(sizeof(unsigned int) * gnd->texturecount);
+	memset(gnd->objectcount, 0, sizeof(unsigned int) * gnd->texturecount);
+	gnd->objectcount[0] = 1;
 	idx = 0;
 	for (i = 1; i < gndgl->objcount; i++) {
 		if (gndgl->texturedata[i] != gndgl->texturedata[i-1])
 			idx++;
-		gnd->vertexcount[idx]++;
+		gnd->objectcount[idx]++;
 	}
 
 	// Lightmap textures
@@ -420,11 +428,29 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), ROGL_FLOAT_OFFSET(3));
 
-	start = 0;
+	start = 0;	// Where our next indice to draw is
 	for (i = 0; i < gnd->texturecount; i++) {
 		glBindTexture(GL_TEXTURE_2D, gnd->texturesids[i]);
-		glDrawRangeElements(GL_QUADS, 0, gnd->objcount * 4, gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, ROGL_SHORT_OFFSET(start));
-		start += gnd->vertexcount[i] * 4;
+#if 1
+		glDrawRangeElements(
+				GL_QUADS,					// Mode
+				0,							// Start (Minimum array index contained in "indices")
+				gnd->objcount * 4,			// End (Maximum array index contained in "indices")
+				gnd->objectcount[i] * 4,	// count (How many elements are going to be rendered?)
+				GL_UNSIGNED_SHORT,			// type of value in the indices array
+				ROGL_SHORT_OFFSET(start)	// offset on indices array, since we're using VBO
+			);
+#else
+		glDrawRangeElements(
+				GL_QUADS,					// Mode
+				start,						// Start (Minimum array index contained in "indices")
+				start + gnd->objectcount[i] * 4,	// End (Maximum array index contained in "indices")
+				gnd->objectcount[i] * 4,	// count (How many elements are going to be rendered?)
+				GL_UNSIGNED_SHORT,			// type of value in the indices array
+				ROGL_OFFSET(0)				// offset on indices array, since we're using VBO
+			);
+#endif
+		start += gnd->objectcount[i] * 4;
 	}
 
 	glClientActiveTexture(GL_TEXTURE2);				// Color
@@ -447,7 +473,7 @@ void gndGLVBO_free(struct ROGndGLVBO* vbo) {
 	glDeleteTextures(2, vbo->lightmap_textures);				// Delete registered lightmaps
 
 	free(vbo->texturesids);
-	free(vbo->vertexcount);
+	free(vbo->objectcount);
 
 	free(vbo);
 }
