@@ -37,9 +37,6 @@
 #define LIGHTMAP_SHADOW 0
 #define LIGHTMAP_COLOR 1
 
-#define VBO_VERTEXES 0
-#define VBO_INDICES 1
-
 void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int surface_id, unsigned int current_surface, unsigned int x, unsigned int y, unsigned int surface_side) {
 	unsigned int idx, cell_idx;
 	const struct ROGndCell *cell, *cell2;
@@ -365,9 +362,9 @@ struct ROGndGLVBO *gndGLVBO_load(const struct ROGndGL* gndgl, const struct ROGnd
 
 	// Copy stuff into video board buffers
 	glGenBuffers(2, gnd->vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[VBO_INDICES]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_INDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(t_rogndidx) * gndgl->objcount, gndgl->indexdata, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+    glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_VERTEXES]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(struct RoGndGL_VertexInfo) * gndgl->objcount * 4, gndgl->vertexdata, GL_STATIC_DRAW);
 
 	// Setup counts
@@ -391,42 +388,42 @@ void gndGLVBO_draw(const struct ROGndGLVBO* gnd) {
 	unsigned int i;
 	unsigned int start;
 
-	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[VBO_INDICES]);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_VERTEXES]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_INDICES]);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glVertexPointer(3, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), 0);
-    glNormalPointer(GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 5));
+    glNormalPointer(GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), ROGL_FLOAT_OFFSET(5));
 
 	// Textures
 	glClientActiveTexture(GL_TEXTURE1);				// Shadow
 	glActiveTexture(GL_TEXTURE1);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_VERTEXES]);
 	glBindTexture(GL_TEXTURE_2D, gnd->lightmap_textures[LIGHTMAP_SHADOW]);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 8));
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), ROGL_FLOAT_OFFSET(8));
 
 	glClientActiveTexture(GL_TEXTURE2);				// Color
 	glActiveTexture(GL_TEXTURE2);
-	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_VERTEXES]);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 8));
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), ROGL_FLOAT_OFFSET(8));
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
 	glBindTexture(GL_TEXTURE_2D, gnd->lightmap_textures[LIGHTMAP_COLOR]);
 
 	glClientActiveTexture(GL_TEXTURE0);				// Main Texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[VBO_VERTEXES]);
+	glBindBuffer(GL_ARRAY_BUFFER, gnd->vbo[ROGL_VBO_VERTEXES]);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);    //Notice that after we call glClientActiveTexture, we enable the array
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), (void*)(sizeof(float) * 3));
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoGndGL_VertexInfo), ROGL_FLOAT_OFFSET(3));
 
 	start = 0;
 	for (i = 0; i < gnd->texturecount; i++) {
 		glBindTexture(GL_TEXTURE_2D, gnd->texturesids[i]);
-		glDrawRangeElements(GL_QUADS, 0, gnd->objcount * 4, gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
+		glDrawRangeElements(GL_QUADS, 0, gnd->objcount * 4, gnd->vertexcount[i] * 4, GL_UNSIGNED_SHORT, ROGL_SHORT_OFFSET(start));
 		start += gnd->vertexcount[i] * 4;
 	}
 

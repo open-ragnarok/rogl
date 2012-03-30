@@ -38,6 +38,13 @@
 
 #include "roint/grf.h"
 
+#define ROGL_OFFSET(x) ((void*)(x))
+#define ROGL_SHORT_OFFSET(x) ((void*)(sizeof(short) * (x)))
+#define ROGL_FLOAT_OFFSET(x) ((void*)(sizeof(float) * (x)))
+
+#define ROGL_VBO_VERTEXES 0
+#define ROGL_VBO_INDICES 1
+
 #ifdef _WIN32
 #	ifdef __GNUC__
 #		include "msvc/glext.h"
