@@ -388,11 +388,24 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 	for (i = 0; i < rsm->node_count; i++) {						// For each node...
 		for (j = 0; j < rsm->nodes[i].face_count; j++) {		// ...and each face...
 			for (k = 0; k < 3; k++) {							// ...we have 3 vertices
+				// "i" is our current node.
+				// "j" is our current face (inside the node)
+				// "k" is our current vertex (inside the face. There are always 3 vertexes on each face).
+#if 0
+				// Coordinates
+				vertexdata[idx].coord[0] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[0];
+				vertexdata[idx].coord[1] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[1];
+				vertexdata[idx].coord[2] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[2];
+
+				// Texture
+				vertexdata[idx].tex[0] = rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u;
+				vertexdata[idx].tex[1] = rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].v;
+#else
 				// Coordinates
 				memcpy(vertexdata[idx].coord, rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v, sizeof(float) * 3);
 				// Texture
 				memcpy(vertexdata[idx].tex, &rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u, sizeof(float) * 2);
-
+#endif
 				// Indice
 				indices[idx] = idx;
 			    idx++;
@@ -424,9 +437,9 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 
 	// Create VBOs and copy stuff to them
 	glGenBuffers(2, ret->vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ret->vbo[1]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ret->vbo[ROGL_VBO_INDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * vertexcount, indices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, ret->vbo[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, ret->vbo[ROGL_VBO_VERTEXES]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(struct RoRsmGL_VertexInfo) * vertexcount, vertexdata, GL_STATIC_DRAW);
 
     // Free unused memory
@@ -494,7 +507,7 @@ void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, 
 	// TODO: Optimize this
 	for (i = 0; i < node->facecount; i++) {
 		glBindTexture(GL_TEXTURE_2D, rsm->texids[node->texture_ids[i]]);
-		glDrawRangeElements(GL_TRIANGLES, start, end, 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * (start + i * 3)));
+		glDrawRangeElements(GL_TRIANGLES, start, end, 3, GL_UNSIGNED_SHORT, ROGL_SHORT_OFFSET(start + i * 3));
 	}
 	//glDrawRangeElements(GL_TRIANGLES, start, end, node->facecount * 3, GL_UNSIGNED_SHORT, (void*)(sizeof(unsigned short) * start));
 
@@ -507,7 +520,27 @@ void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, 
 }
 
 void rsmGLVBO_draw(const struct RoRsmGLVBO* rsm, unsigned long time) {
+	// Bind buffers
+	glBindBuffer(GL_ARRAY_BUFFER, rsm->vbo[ROGL_VBO_VERTEXES]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rsm->vbo[ROGL_VBO_INDICES]);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(struct RoRsmGL_VertexInfo), 0);
+    glNormalPointer(GL_FLOAT, sizeof(struct RoRsmGL_VertexInfo), ROGL_FLOAT_OFFSET(5));
+
+    // We always use texture 0...
+	glClientActiveTexture(GL_TEXTURE0);				// Main Texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindBuffer(GL_ARRAY_BUFFER, rsm->vbo[ROGL_VBO_VERTEXES]);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);    //Notice that after we call glClientActiveTexture, we enable the array
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(struct RoRsmGL_VertexInfo), ROGL_FLOAT_OFFSET(3));
+
 	rsmGLVBO_draw_node(rsm, time, rsm->root_name);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
