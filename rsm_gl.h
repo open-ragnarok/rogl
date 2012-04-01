@@ -60,8 +60,13 @@ struct RoRsmGLVBO_NodeInfo {
 	float position[3];
 	float rotation_angle, rotation_axis[3];
 	float scale[3];
-	// TODO: Poskeys
-	// TODO: Rotkeys
+
+	// Position keyframes
+	int poskey_count;
+	struct RORsmPosKeyframe *poskeys;
+	// Rotation keyframes
+	int rotkey_count;
+	struct RORsmRotKeyframe *rotkeys;
 };
 
 struct RoRsmGLVBO {

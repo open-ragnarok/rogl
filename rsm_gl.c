@@ -207,7 +207,7 @@ void slerpf(float _qm[4], const float _qa[4], const float _qb[4], double t) {
 	qm->z = (qa->z * ratioA + qb->z * ratioB);
 }
 
-void rsm_calc_quaternion(const struct RORsmNode *node, unsigned long curtime, float result[4]) {
+void rsm_calc_quaternion(const struct RORsmRotKeyframe *frames, unsigned int framecount, unsigned long curtime, float result[4]) {
 	int maxframe;
 	int curframe;
 	int curkey;
@@ -216,41 +216,42 @@ void rsm_calc_quaternion(const struct RORsmNode *node, unsigned long curtime, fl
 #ifndef USE_SLERP
 	int qi;
 #endif
-
+    
 	float amount;
-
-	if (node->rotkey_count <= 0)
+    
+	if (framecount <= 0)
 		return;
-
-	maxframe = node->rotkeys[node->rotkey_count - 1].frame;
+    
+	maxframe = frames[framecount - 1].frame;
 	curframe = curtime % maxframe;
 	nextkey = 1;
-
-
+    
+    
 	// Find out wich one is the next key
-	while (node->rotkeys[nextkey].frame < curframe)
+	while (frames[nextkey].frame < curframe)
 		nextkey++;
-
+    
 	curkey = nextkey - 1;
-
+    
 	// how far along are we from one frame to the other? -- this will always be a number from 0 to 1.
-	amount = (float)(curframe - node->rotkeys[curkey].frame)/(float)(node->rotkeys[nextkey].frame - node->rotkeys[curkey].frame);
-
+	amount = (float)(curframe - frames[curkey].frame)/(float)(frames[nextkey].frame - frames[curkey].frame);
+    
 #ifdef USE_SLERP
 	// Use SLERP
-	slerpf(q, node->rotkeys[curkey].q, node->rotkeys[nextkey].q, amount);
+	slerpf(q, frames[curkey].q, frames[nextkey].q, amount);
 #else
 	// Values proportional to our "amount" variable -- linear!
 	for (qi = 0; qi < 4; qi++) {
 		//q[qi] = node->rotkeys[curkey].q[qi] + (node->rotkeys[nextkey].q[qi] - node->rotkeys[curkey].q[qi]) * amount;
-		q[qi] = node->rotkeys[curkey].q[qi] * (1-amount) + node->rotkeys[nextkey].q[qi] * amount;
+		q[qi] = frames[curkey].q[qi] * (1-amount) + frames[nextkey].q[qi] * amount;
 	}
 #endif
-
+    
 	result[0] = q[0];
 	result[1] = q[1];
 	result[2] = q[2];
 	result[3] = q[3];
+    
 }
 
 void rsm_draw_children(const struct RORsm *rsm, const unsigned int *textures, unsigned long timelapse, const char *parent) {
@@ -283,7 +284,7 @@ void rsm_draw_children(const struct RORsm *rsm, const unsigned int *textures, un
 		glTranslatef(node->pos.x, node->pos.y, node->pos.z);
 		glRotatef(node->rot_angle * 180.0f / (float)M_PI, node->rot_axis.x, -node->rot_axis.y, node->rot_axis.z);
 		if (node->rotkey_count > 0) {
-			rsm_calc_quaternion(node, timelapse, q);
+			rsm_calc_quaternion(node->rotkeys, node->rotkey_count, timelapse, q);
 			rsm_apply_quaternion(q);
 		}
 		glScalef(node->scale.x, node->scale.y, node->scale.z);
@@ -433,8 +434,27 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 		memcpy(&ret->nodes[i].transformMatrix[8], &rsm->nodes[i].offsetMT[6], sizeof(float) * 3);
 		memcpy(&ret->nodes[i].transformMatrix[12], &rsm->nodes[i].pos_, sizeof(float) * 3);
 		ret->nodes[i].transformMatrix[15] = 1.0f;
-		// TODO: Position keys
-		// TODO: Rotation keys
+        
+        // Copy position keys and rotation keys from our origin
+        ret->nodes[i].poskey_count = rsm->nodes[i].poskey_count;
+        if (ret->nodes[i].poskey_count > 0) {
+            ret->nodes[i].poskeys = (struct RORsmPosKeyframe*)malloc(sizeof(struct RORsmPosKeyframe) * ret->nodes[i].poskey_count);
+            memcpy(
+                   ret->nodes[i].poskeys, 
+                   rsm->nodes[i].poskeys, 
+                   sizeof(struct RORsmPosKeyframe) * ret->nodes[i].poskey_count
+                   );
+        }
+        
+        ret->nodes[i].rotkey_count = rsm->nodes[i].rotkey_count;
+        if (ret->nodes[i].rotkey_count > 0) {
+            ret->nodes[i].rotkeys = (struct RORsmRotKeyframe*)malloc(sizeof(struct RORsmRotKeyframe) * ret->nodes[i].rotkey_count);
+            memcpy(
+                   ret->nodes[i].rotkeys,
+                   rsm->nodes[i].rotkeys,
+                   sizeof(struct RORsmRotKeyframe) * ret->nodes[i].rotkey_count
+                   );
+        }
 	}
 
 	// Create VBOs and copy stuff to them
@@ -475,6 +495,7 @@ void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, 
 	unsigned int start;	//< Vertex index offset that we will start drawing (NOT face index!)
 	unsigned int end;	//< Vertex end offset
 	unsigned int i;
+    float q[4];
 
 	struct RoRsmGLVBO_NodeInfo *node;	//< The node we're currently drawing.
 
@@ -499,7 +520,11 @@ void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, 
 	glPushMatrix();
 	glTranslatef(node->position[0], node->position[1], node->position[2]);	// Position our node
 	glRotatef(node->rotation_angle, node->rotation_axis[0], node->rotation_axis[1], node->rotation_axis[2]);
-	// TODO: Animate
+    if (node->rotkey_count > 0) {
+        rsm_calc_quaternion(node->rotkeys, node->rotkey_count, time, q);
+        rsm_apply_quaternion(q);
+    }
+
 	glScalef(node->scale[0], node->scale[1], node->scale[2]);
 
 
@@ -570,6 +595,11 @@ void rsmGLVBO_free(struct RoRsmGLVBO* rsm) {
 
 	for (i = 0; i < rsm->node_count; i++) {
 		free(rsm->nodes[i].texture_ids);
+        
+        if (rsm->nodes[i].poskeys != NULL)
+            free(rsm->nodes[i].poskeys);
+        if (rsm->nodes[i].rotkeys != NULL)
+            free(rsm->nodes[i].rotkeys);
 	}
 
 	free(rsm->texids);
