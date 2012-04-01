@@ -33,7 +33,7 @@
 
 // Like memcpy, but adds the amount of bytes copied to the source pointer.
 //#define ptrcopy(dest, source, size) hexdump(source, size); memcpy(dest, source, size); source += (size); ptr_pos += (size)
-#define ptrcopy(dest, source, size) memcpy(dest, source, size); source += (size); ptr_pos += (size)
+#define ptrcopy(dest, source, size) { memcpy(dest, source, size); source += (size); ptr_pos += (size); }
 
 void* __bmp_alloc(size_t size) {
     return(get_roint_malloc_func()(size));
