@@ -19,6 +19,12 @@
 		49752A5B151778A100011072 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49752A591517788800011072 /* OpenGL.framework */; };
 		49752A631517820100011072 /* roint.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49752A61151781F400011072 /* roint.dylib */; };
 		49752A641517820D00011072 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49752A591517788800011072 /* OpenGL.framework */; };
+		49DE8CEB1527CBE900101BC9 /* rogl_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DE8CE81527CBE900101BC9 /* rogl_internal.h */; };
+		49DE8CEC1527CBE900101BC9 /* rogl_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DE8CE81527CBE900101BC9 /* rogl_internal.h */; };
+		49DE8CED1527CBE900101BC9 /* textures.c in Sources */ = {isa = PBXBuildFile; fileRef = 49DE8CE91527CBE900101BC9 /* textures.c */; };
+		49DE8CEE1527CBE900101BC9 /* textures.c in Sources */ = {isa = PBXBuildFile; fileRef = 49DE8CE91527CBE900101BC9 /* textures.c */; };
+		49DE8CEF1527CBE900101BC9 /* textures.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DE8CEA1527CBE900101BC9 /* textures.h */; };
+		49DE8CF01527CBE900101BC9 /* textures.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DE8CEA1527CBE900101BC9 /* textures.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +38,9 @@
 		49752A4E1517778600011072 /* rsm_gl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rsm_gl.h; path = ../rsm_gl.h; sourceTree = "<group>"; };
 		49752A591517788800011072 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/OpenGL.framework; sourceTree = DEVELOPER_DIR; };
 		49752A61151781F400011072 /* roint.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = roint.dylib; path = "../../../../Library/Developer/Xcode/DerivedData/OpenRO_Reloaded-fbavpcchlgyzqjevutbzhgncancd/Build/Products/Debug/roint.dylib"; sourceTree = "<group>"; };
+		49DE8CE81527CBE900101BC9 /* rogl_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rogl_internal.h; path = ../rogl_internal.h; sourceTree = "<group>"; };
+		49DE8CE91527CBE900101BC9 /* textures.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = textures.c; path = ../textures.c; sourceTree = "<group>"; };
+		49DE8CEA1527CBE900101BC9 /* textures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textures.h; path = ../textures.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +85,9 @@
 		49752A481517777600011072 /* RoGL */ = {
 			isa = PBXGroup;
 			children = (
+				49DE8CE81527CBE900101BC9 /* rogl_internal.h */,
+				49DE8CE91527CBE900101BC9 /* textures.c */,
+				49DE8CEA1527CBE900101BC9 /* textures.h */,
 				49752A491517778600011072 /* bmp.c */,
 				49752A4A1517778600011072 /* bmp.h */,
 				49752A4B1517778600011072 /* gnd_gl.c */,
@@ -105,6 +117,8 @@
 				49752A501517778600011072 /* bmp.h in Headers */,
 				49752A521517778600011072 /* gnd_gl.h in Headers */,
 				49752A541517778600011072 /* rsm_gl.h in Headers */,
+				49DE8CEB1527CBE900101BC9 /* rogl_internal.h in Headers */,
+				49DE8CEF1527CBE900101BC9 /* textures.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +126,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49DE8CEC1527CBE900101BC9 /* rogl_internal.h in Headers */,
+				49DE8CF01527CBE900101BC9 /* textures.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -187,6 +203,7 @@
 				49752A4F1517778600011072 /* bmp.c in Sources */,
 				49752A511517778600011072 /* gnd_gl.c in Sources */,
 				49752A531517778600011072 /* rsm_gl.c in Sources */,
+				49DE8CED1527CBE900101BC9 /* textures.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,6 +214,7 @@
 				49752A551517779D00011072 /* bmp.c in Sources */,
 				49752A561517779D00011072 /* gnd_gl.c in Sources */,
 				49752A571517779D00011072 /* rsm_gl.c in Sources */,
+				49DE8CEE1527CBE900101BC9 /* textures.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -348,6 +366,7 @@
 				49752A3D1517776500011072 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		49752A451517777000011072 /* Build configuration list for PBXNativeTarget "rogl" */ = {
 			isa = XCConfigurationList;
@@ -356,6 +375,7 @@
 				49752A471517777000011072 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
