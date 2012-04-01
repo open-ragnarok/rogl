@@ -27,7 +27,12 @@
 #include "roint/rsm.h"
 #include "roint/rsw.h"
 #include "roint/grf.h"
+
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <gl/gl.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

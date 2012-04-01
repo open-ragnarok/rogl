@@ -333,6 +333,7 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 	unsigned int facecount;
 	unsigned int vertexcount;
 
+	const struct RORsmNode *node;
 	struct RoRsmGL_VertexInfo *vertexdata;	//< List of ALL vertices.
 	unsigned short *indices;				//< List of ALL indices. in the same sequence of the nodes.
 
@@ -386,6 +387,7 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 	idx = 0;
 	face_idx = 0;
 	for (i = 0; i < rsm->node_count; i++) {						// For each node...
+        node = &rsm->nodes[i];
 		for (j = 0; j < rsm->nodes[i].face_count; j++) {		// ...and each face...
 			for (k = 0; k < 3; k++) {							// ...we have 3 vertices
 				// "i" is our current node.
@@ -393,18 +395,18 @@ struct RoRsmGLVBO* rsmGLVBO_load(const struct RORsm *rsm, const struct ROGrf* gr
 				// "k" is our current vertex (inside the face. There are always 3 vertexes on each face).
 #if 1
 				// Coordinates
-				vertexdata[idx].coord[0] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[0];
-				vertexdata[idx].coord[1] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[1];
-				vertexdata[idx].coord[2] = rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v[2];
+				vertexdata[idx].coord[0] = node->vertices[node->faces[j].vertidx[k]].v[0];
+				vertexdata[idx].coord[1] = node->vertices[node->faces[j].vertidx[k]].v[1];
+				vertexdata[idx].coord[2] = node->vertices[node->faces[j].vertidx[k]].v[2];
 
 				// Texture
-				vertexdata[idx].tex[0] = rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u;
-				vertexdata[idx].tex[1] = 1.0f - rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].v;
+				vertexdata[idx].tex[0] = 1.0f - node->texv[node->faces[j].tvertidx[k]].v;
+				vertexdata[idx].tex[1] = node->texv[node->faces[j].tvertidx[k]].u;
 #else
 				// Coordinates
-				memcpy(vertexdata[idx].coord, rsm->nodes[i].vertices[rsm->nodes[i].faces[j].vertidx[k]].v, sizeof(float) * 3);
+				memcpy(vertexdata[idx].coord, node->vertices[node->faces[j].vertidx[k]].v, sizeof(float) * 3);
 				// Texture
-				memcpy(vertexdata[idx].tex, &rsm->nodes[i].texv[rsm->nodes[i].faces[j].tvertidx[k]].u, sizeof(float) * 2);
+				memcpy(vertexdata[idx].tex, &rsm->nodes[i].texv[node->faces[j].tvertidx[k]].u, sizeof(float) * 2);
 #endif
 				// Indice
 				indices[idx] = idx;
@@ -496,12 +498,13 @@ void rsmGLVBO_draw_node_index(const struct RoRsmGLVBO* rsm, unsigned long time, 
 
 	glPushMatrix();
 	glTranslatef(node->position[0], node->position[1], node->position[2]);	// Position our node
-	glRotatef(node->rotation_angle, node->rotation_axis[0], -node->rotation_axis[1], node->rotation_axis[2]);
+	glRotatef(node->rotation_angle, node->rotation_axis[0], node->rotation_axis[1], node->rotation_axis[2]);
 	// TODO: Animate
 	glScalef(node->scale[0], node->scale[1], node->scale[2]);
 
-	glPushMatrix();	// Other changes will not be pushed to our children
-	glMultMatrixf(node->transformMatrix);
+
+    glPushMatrix();	// Other changes will not be pushed to our children
+    glMultMatrixf(node->transformMatrix);
 
 	// The actual drawing
 	// TODO: Optimize this
