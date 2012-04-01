@@ -29,6 +29,8 @@
 
 #include <string.h>
 
+#define TEXTURE_CREATE_RAGNAROK_ALPHA
+
 int rogl_load_texture(const struct ROGrf* grf, const char* tex_fn, unsigned int glidx) {
 	unsigned char m_alloc;
 	struct strBMP *bmp;
@@ -71,6 +73,20 @@ int rogl_load_texture(const struct ROGrf* grf, const char* tex_fn, unsigned int 
 			grf_freedata(file);
 		return(-2);
 	}
+    
+#ifdef TEXTURE_CREATE_RAGNAROK_ALPHA
+    // Convert #FF00FF color to a transparent one
+    for (i = 0; i < bmp->info.width * bmp->info.height; i++) {
+        if (buf[i * 4 + 0] >= 253 &&
+            buf[i * 4 + 1] <= 3   &&
+            buf[i * 4 + 2] >= 253) {
+            buf[i * 4 + 3] = 0;
+        }
+        else {
+            buf[i * 4 + 3] = 255;
+        }
+    }
+#endif
 
 	glBindTexture(GL_TEXTURE_2D, glidx);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);   // Linear Min Filter
