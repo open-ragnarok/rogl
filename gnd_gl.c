@@ -91,11 +91,11 @@ void loadSurface(const struct ROGnd* gnd, struct ROGndGL *gndgl, unsigned int su
 	lm_y = surface->lightmapId % lm_h;
 
 	// Calculate U: y / h + u0 / h = (y + u0) / h
-	lightmap_u[0] = (float)(0.1f + lm_y) / lm_h;
-	lightmap_u[1] = (float)(0.9f + lm_y) / lm_h;
+	lightmap_v[0] = (float)(0.1f + lm_y) / lm_h;
+	lightmap_v[1] = (float)(0.9f + lm_y) / lm_h;
 	// Calculate V: x / w + v0 / w = (x + v0) / w
-	lightmap_v[0] = (float)(0.1f + lm_x) / lm_w;
-	lightmap_v[1] = (float)(0.9f + lm_x) / lm_w;
+	lightmap_u[0] = (float)(0.1f + lm_x) / lm_w;
+	lightmap_u[1] = (float)(0.9f + lm_x) / lm_w;
 	gndgl->vertexdata[idx+0].lightmap_tex[0] = lightmap_u[0];
 	gndgl->vertexdata[idx+0].lightmap_tex[1] = lightmap_v[0];
 
